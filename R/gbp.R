@@ -1,10 +1,15 @@
-gbp <- function(x, w, covariates, mean.PriorDist, model, intercept, Alpha) UseMethod("gbp")
-
-gbp.default <- function(x, w, covariates, mean.PriorDist, model = "gr", intercept = TRUE, Alpha = 0.95) {
+######
+gbp <- function(x, w, covariates, mean.PriorDist, model, intercept, Alpha, n.IS, trial.scale) UseMethod("gbp")
+######
+gbp.default <- function(x, w, covariates, mean.PriorDist, model = "gaussian", 
+                        intercept = TRUE, Alpha = 0.95, 
+                        n.IS = 0, trial.scale = 2.5) {
+######
   res <- switch(model, 
-           gr = gr(x, w, X = covariates, mu = mean.PriorDist, Alpha = Alpha, intercept = intercept), 
-           br = br(x, w, X = covariates, prior.mean = mean.PriorDist, intercept = intercept, Alpha = Alpha), 
-           pr = pr(x, w, X = covariates, prior.mean = mean.PriorDist, intercept = intercept, Alpha = Alpha))
+       gaussian = gr(x, w, X = covariates, mu = mean.PriorDist, Alpha = Alpha, intercept = intercept), 
+       binomial = br(x, w, X = covariates, prior.mean = mean.PriorDist, intercept = intercept, Alpha = Alpha,
+                     n.IS = n.IS, trial.scale = trial.scale), 
+       poisson = pr(x, w, X = covariates, prior.mean = mean.PriorDist, intercept = intercept, Alpha = Alpha))
   
   class(res) <- "gbp"	
   res
@@ -65,7 +70,8 @@ print.gbp <- function(x, sort = TRUE, ...) {
 
   temp.mean <- colMeans(temp)
   temp <- data.frame(rbind(temp, temp.mean), row.names = c(rownames(temp), "colMeans"))
-  temp <- round(temp, 3)
+  temp[, 1] <- format.default(temp[, 1], digits = 3)
+  temp[dim(temp)[1], 1] <- ""
 
   if (x$model == "gr") {
     temp[, 2] <- round(temp[, 2], 1)
@@ -88,7 +94,9 @@ print.gbp <- function(x, sort = TRUE, ...) {
   }
 
   cat("\n")
+  options(digits = 3)
   print(temp)
+  options(digits = 7)
 }
 
 summary.gbp <- function(object, ...) {
@@ -150,25 +158,25 @@ summary.gbp <- function(object, ...) {
       summary.table <- temp2[c(1, (dim(temp2)[1] + 1) / 2, dim(temp2)[1]), ]
       number.of.medians <- dim(summary.table)[1] - 2
       if (number.of.medians == 1) {
-        row.names(summary.table) <- c("Unit w/ min(obs.mean)", 
-                                      "Unit w/ median(obs.mean)", 
-                                      "Unit w/ max(obs.mean)")
+        row.names(summary.table) <- c("Unit with min(obs.mean)", 
+                                      "Unit with median(obs.mean)", 
+                                      "Unit with max(obs.mean)")
       } else {  # if there are more than one median
-        row.names(summary.table) <- c("Unit w/ min(obs.mean)", 
-                                     paste("Unit w/ median(obs.mean)", 1 : number.of.medians, sep = ""),
-                                     "Unit w/ max(obs.mean)")
+        row.names(summary.table) <- c("Unit with min(obs.mean)", 
+                                     paste("Unit with median(obs.mean)", 1 : number.of.medians, sep = ""),
+                                     "Unit with max(obs.mean)")
       }
     } else {  # if number of groups is even
       summary.table <- temp2[c(1, dim(temp2)[1] / 2, dim(temp2)[1] / 2 + 1, dim(temp2)[1]), ]
       number.of.medians <- dim(summary.table)[1] - 2
       if (number.of.medians == 1) {
-        row.names(summary.table) <- c("Unit w/ min(obs.mean)", 
-                                      "Unit w/ median(obs.mean)", 
-                                      "Unit w/ max(obs.mean)")
+        row.names(summary.table) <- c("Unit with min(obs.mean)", 
+                                      "Unit with median(obs.mean)", 
+                                      "Unit with max(obs.mean)")
       } else {  # if there are more than one median
-        row.names(summary.table) <- c("Unit w/ min(obs.mean)", 
-                                     paste("Unit w/ median(obs.mean)", 1 : number.of.medians, sep = ""),
-                                     "Unit w/ max(obs.mean)")
+        row.names(summary.table) <- c("Unit with min(obs.mean)", 
+                                     paste("Unit with median(obs.mean)", 1 : number.of.medians, sep = ""),
+                                     "Unit with max(obs.mean)")
       }
     }
   } else { # if n or se are different from each group
@@ -180,19 +188,19 @@ summary.gbp <- function(object, ...) {
       number.of.medians <- dim(summary.table)[1] - 2
       if (object$model == "gr") {
         if (number.of.medians == 1) {
-          row.names(summary.table) <- c("Unit w/ min(se)", "Unit w/ median(se)", "Unit w/ max(se)")
+          row.names(summary.table) <- c("Unit with min(se)", "Unit with median(se)", "Unit with max(se)")
         } else {
-          row.names(summary.table) <- c("Unit w/ min(se)", 
-                                       paste("Unit w/ median(se)", 1 : number.of.medians, sep = ""),
-                                       "Unit w/ max(se)")
+          row.names(summary.table) <- c("Unit with min(se)", 
+                                       paste("Unit with median(se)", 1 : number.of.medians, sep = ""),
+                                       "Unit with max(se)")
         }
       } else {  # if model is not "gr"
         if (number.of.medians == 1) {
-          row.names(summary.table) <- c("Unit w/ min(n)", "Unit w/ median(n)", "Unit w/ max(n)")
+          row.names(summary.table) <- c("Unit with min(n)", "Unit with median(n)", "Unit with max(n)")
         } else {
-          row.names(summary.table) <- c("Unit w/ min(n)", 
-                                       paste("Unit w/ median(n)", 1 : number.of.medians, sep = ""),
-                                       "Unit w/ max(n)")
+          row.names(summary.table) <- c("Unit with min(n)", 
+                                       paste("Unit with median(n)", 1 : number.of.medians, sep = ""),
+                                       "Unit with max(n)")
         }
       }
 
@@ -201,19 +209,19 @@ summary.gbp <- function(object, ...) {
       number.of.medians <- dim(summary.table)[1] - 2
       if (object$model == "gr") {
         if (number.of.medians == 1) {
-          row.names(summary.table) <- c("Unit w/ min(se)", "Unit w/ median(se)", "Unit w/ max(se)")
+          row.names(summary.table) <- c("Unit with min(se)", "Unit with median(se)", "Unit with max(se)")
         } else {
-          row.names(summary.table) <- c("Unit w/ min(se)", 
-                                       paste("Unit w/ median(se)", 1 : number.of.medians, sep = ""),
-                                       "Unit w/ max(se)")
+          row.names(summary.table) <- c("Unit with min(se)", 
+                                       paste("Unit with median(se)", 1 : number.of.medians, sep = ""),
+                                       "Unit with max(se)")
         }
       } else {  # if model is not "gr"
         if (number.of.medians == 1) {
-          row.names(summary.table) <- c("Unit w/ min(n)", "Unit w/ median(n)", "Unit w/ max(n)")
+          row.names(summary.table) <- c("Unit with min(n)", "Unit with median(n)", "Unit with max(n)")
         } else {
-          row.names(summary.table) <- c("Unit w/ min(n)", 
-                                       paste("Unit w/ median(n)", 1 : number.of.medians, sep = ""),
-                                       "Unit w/ max(n)")
+          row.names(summary.table) <- c("Unit with min(n)", 
+                                       paste("Unit with median(n)", 1 : number.of.medians, sep = ""),
+                                       "Unit with max(n)")
         }
       }
     }
@@ -231,10 +239,18 @@ summary.gbp <- function(object, ...) {
 
   summary.table <- data.frame(rbind(summary.table, temp.mean), 
                               row.names = c(rownames(summary.table), "Overall Mean"))
+  summary.table[, 1] <- format.default(summary.table[, 1], digits = 3)
+  summary.table[dim(summary.table)[1], 1] <- ""
 
   post.mode.alpha <- object$a.new
   post.sd.alpha <- sqrt(object$a.var)
-  result2 <- data.frame(post.mode.alpha, post.sd.alpha)
+  if (object$model == "gr") {
+    post.mode.A <- exp(object$a.new)
+    result2 <- data.frame(post.mode.alpha, post.sd.alpha, post.mode.A)
+  } else {
+    post.mode.r <- exp(-object$a.new)
+    result2 <- data.frame(post.mode.alpha, post.sd.alpha, post.mode.r)
+  }
 
   if (any(is.na(object$prior.mean))) {
     estimate <- as.vector(object$beta.new)
@@ -258,32 +274,38 @@ summary.gbp <- function(object, ...) {
 
 
 print.summary.gbp <- function(x, ...) {
+
   if (identical(x$reg, NA)) {
+    options(digits = 3)
     cat("Main summary:\n")
     cat("\n")
-    print(round(x$main, 3))
+    print(x$main)
     cat("\n")
     cat("\n")
     cat("Second-level Variance Component Estimation Summary:\n")
-    cat("alpha = log(A) for Gaussian and log(1/r) for Binomial and Poisson data:\n")
+    cat("alpha = log(A) for Gaussian or alpha = log(1/r) for Binomial and Poisson data:\n")
     cat("\n")
-    print(round(x$sec.var, 3))
+    print(x$sec.var)
+    options(digits = 7)
   } else {
     cat("Main summary:\n")
     cat("\n")
-    print(round(x$main, 3))
+    options(digits = 3)
+    print(x$main)
     cat("\n")
     cat("\n")
     cat("Second-level Variance Component Estimation Summary:\n")
-    cat("alpha = log(A) for Gaussian and log(1/r) for Binomial and Poisson data:\n")
+    cat("alpha = log(A) for Gaussian or alpha =  log(1/r) for Binomial and Poisson data:\n")
     cat("\n")
-    print(round(x$sec.var, 3))
+    print(x$sec.var)
+    options(digits = 7)
     cat("\n")
     cat("\n")
     cat("Regression Summary:\n")
     cat("\n")
     print(round(x$reg, 3))
   }
+
 }
 
 plot.gbp <- function(x, sort = TRUE, ...) {
@@ -299,7 +321,6 @@ plot.gbp <- function(x, sort = TRUE, ...) {
   po.sd <- x$post.sd
   po.low <- x$post.intv.low
   po.upp <- x$post.intv.upp
-  xlabel <- "Indices (Groups) by the order of data input"
 
   if (sort == TRUE) {
     temp.data <- as.data.frame(cbind(y, se, pr.m, po.m, po.sd, po.low, po.upp))
@@ -311,18 +332,14 @@ plot.gbp <- function(x, sort = TRUE, ...) {
     po.sd <- temp.data[, 5]
     po.low <- temp.data[, 6]
     po.upp <- temp.data[, 7]
-    if (x$model == "gr") {
-      xlabel <- "Units sorted by the increasing order of se"
-    } else {
-      xlabel <- "Units sorted by the increasing order of n"
-    }
   }
 
   index <- 1 : length(se)
   ylim.low <- ifelse(min(po.low, y) >= 0, 0.8 * min(po.low, y), 1.2 * min(po.low, y))
   ylim.upp <- ifelse(max(po.upp, y) >= 0, 1.2 * max(po.upp, y), 0.8 * max(po.upp, y))
   
-  par(mfrow = c(1, 2), xaxs = "r", yaxs = "r", mai = c(1, 0.1, 1, 0.3), las = 1, ps = 13,oma=c(0,10,0,0))
+  par(mfrow = c(2, 1), xaxs = "r", yaxs = "r", mai = c(0.5, 0.3, 0.5, 0.3), las = 1, ps = 13,
+      oma = c(0, 9, 0, 0))
   sqrtV <- se
   sdlens <- sqrtV / max(sqrtV)
   postlens <- po.sd / max(po.sd)
@@ -355,7 +372,7 @@ plot.gbp <- function(x, sort = TRUE, ...) {
   })
 
   
-  plot(index, po.m, ylim = c(ylim.low, ylim.upp), xlab = xlabel, ylab = expression(theta),
+  plot(index, po.m, ylim = c(ylim.low, ylim.upp), xlab = "", ylab = expression(theta),
        main = paste(100 * x$Alpha, "% Interval Plot"), 
        col = 2, pch = 19)
   sapply(1 : length(y), function(j) {
@@ -372,11 +389,24 @@ plot.gbp <- function(x, sort = TRUE, ...) {
 
   ## legend
   se.or.n <- switch(x$model, "gr" = "standard error", "br" = "n", "pr" = "n")
-  par(new=TRUE,mfrow=c(1,1),oma=c(0,0,0,0))
+  par(new = TRUE, mfrow = c(1, 1), oma = c(0, 0, 0, 0))
   plot(1, type="n", axes=F, xlab="", ylab="")
     legend("topleft", pch = c(19, 1, NA, NA, NA,0), col = c(2, 1, 4,"darkviolet", "darkgreen",1), 
          lwd = c(NA, NA, 2, 2, 2), 
          c("posterior mean", "sample mean", "prior mean", se.or.n, "posterior sd", "crossover"),
          seg.len = 0.5, bty = "n",xpd=TRUE)
+
+  par(new = TRUE, mfrow = c(2, 1), oma = c(0, 0, 0, 0))
+  plot(1, type="n", axes=F, xlab="", ylab="")
+  if (sort == TRUE) {
+    if (x$model == "gr") {
+      legend("topleft", c("Units", "sorted", "by the", "ascending", "order of", "se"), bty = "n")
+    } else {
+      legend("topleft", c("Units", "sorted", "by the", "ascending", "order of", "n"), bty = "n")
+    }
+  } else {
+    legend("topleft", c("Units", "not", "sorted", "by the", "ascending", "order of", "n"), bty = "n")
+  }
+
 
 }

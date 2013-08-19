@@ -2,9 +2,9 @@
 \alias{Rgbp-package}
 \alias{Rgbp}
 \docType{package}
-\title{Bayesian Hierarchical Modeling and Frequentist Method Check}
+\title{Gaussian, Poisson, and Binomial Hierarchical Modeling}
 \description{
-Bayesian-frequentist reconciliation via Bayesian hierarchical modeling for Gaussian, Binomial, and Poisson data and frequentist method check for good coverage probability.
+Bayesian-frequentist reconciliation via approximate Bayesian hierarchical modeling and frequency method checking for Gaussian, Binomial, and Poisson data.
 }
 \details{
   \tabular{ll}{
@@ -16,11 +16,10 @@ Bayesian-frequentist reconciliation via Bayesian hierarchical modeling for Gauss
     Main functions: \tab \code{\link{gbp}}, \code{\link{coverage}}\cr
   }
 
-This package uses Bayesian machinery to estimate a two-level model (a random-effects mixed model) and allows for a check of its frequentist properties via a repeated sampling procedure (which we call a "method check"). It is found that even in small samples our procedure yields good frequency properties. Also, this package will be useful for Bayesians who want to see a non-informative reference point before and after constructing their full-Bayesian hierarchical model. For frequentists, it will provide confidence intervals of a random-effect mixed model with good repeated sampling properties.
-
+\code{Rgbp} is an R package that utilizes approximate Bayesian machinery to provide a method of estimating two-level hierarchical models for Gaussian, Poisson, and Binomial data in a fast and computationally efficient manner. The main products of this package are point and interval estimates for the true parameters, whose good frequency properties can be validated via its repeated sampling procedure called frequency method checking.  It is found that such Bayesian-frequentist reconciliation allows \code{Rgbp} to have attributes desirable from both perspectives, working well in small samples and yielding good coverage probabilities for its interval estimates.
 }
 \author{
-  Joseph Kelly, Carl Morris, and Hyungsuk Tak
+  Joseph Kelly, Hyungsuk Tak, and Carl Morris
 
   Maintainer: Joseph Kelly <kelly2@fas.harvard.edu>
 }
@@ -29,7 +28,6 @@ This package uses Bayesian machinery to estimate a two-level model (a random-eff
 }
 
 \examples{
-
 
   # Loading datasets
   data(schools)
@@ -54,7 +52,7 @@ This package uses Bayesian machinery to estimate a two-level model (a random-eff
     # If we do not have any covariate and do not know a mean of the prior distribution #
     ####################################################################################
 
-    g <- gbp(y, se)
+    g <- gbp(y, se, model = "gaussian")
     g
     print(g, sort = FALSE)
     summary(g)
@@ -63,21 +61,14 @@ This package uses Bayesian machinery to estimate a two-level model (a random-eff
 
     ### when we want to simulate pseudo datasets considering the estimated values 
     ### as true ones.
-    gcv <- coverage(g, nsim = 10)  
-
-    ### gcv$coverageRB, gcv$coverage10, gcv$average.coverageRB, gcv$average.coverage10,
-    ### gcv$minimum.coverageRB, gcv$minimum.coverage10, gcv$raw.resultRB, gcv$raw.result10.
-
-    ### when we want to simulate pseudo datasets based on different values of A and 
-    ### of a regression coefficient (intercept), 
-    ### not using estimated values as true ones.
-    gcv <- coverage(g, A.or.r = 9, reg.coef = 10, nsim = 10)  
+    ### gcv <- coverage(g, nsim = 10)  
+    ### more details in ?coverage
 
     ##################################################################################
     # If we have one covariate and do not know a mean of the prior distribution yet, #
     ##################################################################################
 
-    g <- gbp(y, se, x2, model = "gr")
+    g <- gbp(y, se, x2, model = "gaussian")
     g
     print(g, sort = FALSE)
     summary(g)
@@ -86,21 +77,14 @@ This package uses Bayesian machinery to estimate a two-level model (a random-eff
 
     ### when we want to simulate pseudo datasets considering the estimated values 
     ### as true ones.
-    gcv <- coverage(g, nsim = 10)  
- 
-    ### gcv$coverageRB, gcv$coverage10, gcv$average.coverageRB, gcv$average.coverage10,
-    ### gcv$minimum.coverageRB, gcv$minimum.coverage10, gcv$raw.resultRB, gcv$raw.result10.
-
-    ### when we want to simulate pseudo datasets based on different values of A,
-    ### of regression coefficients, and of covariate, not using estimated values 
-    ### as true ones. Two values of reg.coef are for beta0 and beta1
-    gcv <- coverage(g, A.or.r = 9, reg.coef = c(10, 1), covariates = x2, nsim = 10)  
+    ### gcv <- coverage(g, nsim = 10)  
+    ### more details in ?coverage 
 
     ################################################
     # If we know a mean of the prior distribution, #
     ################################################
 
-    g <- gbp(y, se, mean.PriorDist = 8)
+    g <- gbp(y, se, mean.PriorDist = 8, model = "gaussian")
     g
     print(g, sort = FALSE)
     summary(g)
@@ -109,14 +93,8 @@ This package uses Bayesian machinery to estimate a two-level model (a random-eff
 
     ### when we want to simulate pseudo datasets considering the estimated values 
     ### as true ones.
-    gcv <- coverage(g, nsim = 10)  
-
-    ### gcv$coverageRB, gcv$coverage10, gcv$average.coverageRB, gcv$average.coverage10,
-    ### gcv$minimum.coverageRB, gcv$minimum.coverage10, gcv$raw.resultRB, gcv$raw.result10.
-
-    ### when we want to simulate pseudo datasets based on different values of A and
-    ### of 2nd level mean as true ones, not using estimated values as true ones.
-    coverage(g, A.or.r = 9, mean.PriorDist = 5, nsim = 10)  
+    ### gcv <- coverage(g, nsim = 10)  
+    ### more details in ?coverage 
 
   ###############################################################
   # Binomial Regression Interactive Multilevel Modeling (BRIMM) #
@@ -126,7 +104,7 @@ This package uses Bayesian machinery to estimate a two-level model (a random-eff
     # If we do not have any covariate and do not know a mean of the prior distribution #
     ####################################################################################
 
-    b <- gbp(z, n, model = "br")
+    b <- gbp(z, n, model = "binomial")
     b
     print(b, sort = FALSE)
     summary(b)
@@ -135,21 +113,14 @@ This package uses Bayesian machinery to estimate a two-level model (a random-eff
 
     ### when we want to simulate pseudo datasets considering the estimated values 
     ### as true ones.
-    bcv <- coverage(b, nsim = 10)  
-
-    ### bcv$coverageRB, bcv$coverage10, bcv$average.coverageRB, bcv$average.coverage10,
-    ### bcv$minimum.coverageRB, bcv$minimum.coverage10, bcv$raw.resultRB, bcv$raw.result10.
-
-    ### when we want to simulate pseudo datasets based on different values of r and 
-    ### of a regression coefficient (intercept), 
-    ### not using estimated values as true ones.
-    bcv <- coverage(b, A.or.r = 60, reg.coef = -1, nsim = 10)  
+    ### bcv <- coverage(b, nsim = 10)  
+    ### more details in ?coverage 
 
     ##################################################################################
     # If we have one covariate and do not know a mean of the prior distribution yet, #
     ##################################################################################
 
-    b <- gbp(z, n, x1, model = "br")
+    b <- gbp(z, n, x1, model = "binomial")
     b
     print(b, sort = FALSE)
     summary(b)
@@ -158,21 +129,14 @@ This package uses Bayesian machinery to estimate a two-level model (a random-eff
 
     ### when we want to simulate pseudo datasets considering the estimated values 
     ### as true ones.
-    bcv <- coverage(b, nsim = 10)  
-
-    ### bcv$coverageRB, bcv$coverage10, bcv$average.coverageRB, bcv$average.coverage10,
-    ### bcv$minimum.coverageRB, bcv$minimum.coverage10, bcv$raw.resultRB, bcv$raw.result10.
-
-    ### when we want to simulate pseudo datasets based on different values of r,
-    ### of regression coefficients, and of covariate, not using estimated values 
-    ### as true ones. Two values of reg.coef are for beta0 and beta1
-    bcv <- coverage(b, A.or.r = 60, reg.coef = c(-1, 0), covariates = x1, nsim = 10)  
+    ### bcv <- coverage(b, nsim = 10)  
+    ### more details in ?coverage 
 
     ################################################
     # If we know a mean of the prior distribution, #
     ################################################
 
-    b <- gbp(z, n, mean.PriorDist = 0.265, model = "br")
+    b <- gbp(z, n, mean.PriorDist = 0.265, model = "binomial")
     b
     print(b, sort = FALSE)
     summary(b)
@@ -181,14 +145,8 @@ This package uses Bayesian machinery to estimate a two-level model (a random-eff
 
     ### when we want to simulate pseudo datasets considering the estimated values 
     ### as true ones.
-    bcv <- coverage(b, nsim = 10)  
-
-    ### bcv$coverageRB, bcv$coverage10, bcv$average.coverageRB, bcv$average.coverage10,
-    ### bcv$minimum.coverageRB, bcv$minimum.coverage10, bcv$raw.resultRB, bcv$raw.result10.
-
-    ### when we want to simulate pseudo datasets based on different values of r and
-    ### of 2nd level mean as true ones, not using estimated values as true ones.
-    bcv <- coverage(b, A.or.r = 60, mean.PriorDist = 0.3, nsim = 10)  
+    ### bcv <- coverage(b, nsim = 10)  
+    ### more details in ?coverage 
 
   ##############################################################
   # Poisson Regression Interactive Multilevel Modeling (PRIMM) #
@@ -198,7 +156,7 @@ This package uses Bayesian machinery to estimate a two-level model (a random-eff
     # If we do not have any covariate and do not know a mean of the prior distribution #
     ####################################################################################
 
-    p <- gbp(z, n, model = "pr")
+    p <- gbp(z, n, model = "poisson")
     p
     print(p, sort = FALSE)
     summary(p)
@@ -207,21 +165,14 @@ This package uses Bayesian machinery to estimate a two-level model (a random-eff
 
     ### when we want to simulate pseudo datasets considering the estimated values 
     ### as true ones.
-    pcv <- coverage(p, nsim = 10)  
-
-    ### pcv$coverageRB, pcv$coverage10, pcv$average.coverageRB, pcv$average.coverage10,
-    ### pcv$minimum.coverageRB, pcv$minimum.coverage10, pcv$raw.resultRB, pcv$raw.result10.
-
-    ### when we want to simulate pseudo datasets based on different values of r and 
-    ### of a regression coefficient (intercept), 
-    ### not using estimated values as true ones.
-    pcv <- coverage(p, A.or.r = 60, reg.coef = -5, nsim = 10)  
+    ### pcv <- coverage(p, nsim = 10)  
+    ### more details in ?coverage 
 
     ##################################################################################
     # If we have one covariate and do not know a mean of the prior distribution yet, #
     ##################################################################################
 
-    p <- gbp(z, n, x1, model = "pr")
+    p <- gbp(z, n, x1, model = "poisson")
     p
     print(p, sort = FALSE)
     summary(p)
@@ -230,21 +181,14 @@ This package uses Bayesian machinery to estimate a two-level model (a random-eff
 
     ### when we want to simulate pseudo datasets considering the estimated values 
     ### as true ones.
-    pcv <- coverage(p, nsim = 10)  
-
-    ### pcv$coverageRB, pcv$coverage10, pcv$average.coverageRB, pcv$average.coverage10,
-    ### pcv$minimum.coverageRB, pcv$minimum.coverage10, pcv$raw.resultRB, pcv$raw.result10.
-
-    ### when we want to simulate pseudo datasets based on different values of r,
-    ### of regression coefficients, and of covariate, not using estimated values 
-    ### as true ones. Two values of reg.coef are for beta0 and beta1
-    pcv <- coverage(p, A.or.r = 60, reg.coef = c(-2, 0), covariates = x1, nsim = 10)  
+    ### pcv <- coverage(p, nsim = 10)  
+    ### more details in ?coverage 
 
     ################################################
     # If we know a mean of the prior distribution, #
     ################################################
 
-    p <- gbp(z, n, mean.PriorDist = 0.265, model = "pr")
+    p <- gbp(z, n, mean.PriorDist = 0.265, model = "poisson")
     p
     print(p, sort = FALSE)
     summary(p)
@@ -253,14 +197,8 @@ This package uses Bayesian machinery to estimate a two-level model (a random-eff
 
     ### when we want to simulate pseudo datasets considering the estimated values 
     ### as true ones.
-    pcv <- coverage(p, nsim = 10)  
-
-    ### pcv$coverageRB, pcv$coverage10, pcv$average.coverageRB, pcv$average.coverage10,
-    ### pcv$minimum.coverageRB, pcv$minimum.coverage10, pcv$raw.resultRB, pcv$raw.result10.
-
-    ### when we want to simulate pseudo datasets based on different values of r and
-    ### of 2nd level mean as true ones, not using estimated values as true ones.
-    pcv <- coverage(p, A.or.r = 60, mean.PriorDist = 0.3, nsim = 10)  
+    ### pcv <- coverage(p, nsim = 10)  
+    ### more details in ?coverage 
 
 }
 
