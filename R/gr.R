@@ -1,8 +1,8 @@
 #Note this R code fits the hierarchical normal-normal model using ADM
 #Author: Joseph Kelly
 
-gr<-function(y,se,X,mu,Alpha=0.95,intercept=T,eps=0.0001){
-	
+gr<-function(y,se,X,mu,Alpha=0.95,intercept=T,eps=0.0001, normal.CI = FALSE){
+
   ##define some values that will be used often
   muknown <- !missing(mu)
   if (!muknown) {
@@ -82,10 +82,17 @@ gr<-function(y,se,X,mu,Alpha=0.95,intercept=T,eps=0.0001){
   ## calculate CIs using skewed normal
   ## TODO: use apply not loop
 
-  snparam <- lapply(1:length(thetahat), function(i){as.numeric(gr.cp.to.dp(c(thetahat[i],shat[i],sign(skew[i])*min(abs(skew[i]),0.94))))})
-  tmp <- lapply(1:length(thetahat), function(i){c(qsn((1-Alpha)/2,snparam[[i]][1], snparam[[i]][2], snparam[[i]][3], engine = "biv.nt.prob"),thetahat[i],qsn(1-(1-Alpha)/2,snparam[[i]][1], snparam[[i]][2], snparam[[i]][3], engine = "biv.nt.prob"))})
-  skewedmat <- as.matrix(do.call("rbind", tmp))
-
+  if(normal.CI){
+    snparam <- NULL
+    skewedmat <- matrix(nrow = length(thetahat), ncol = 3)
+    skewedmat[,1] <- qnorm((1-Alpha)/2,thetahat,shat)
+    skewedmat[,2] <- thetahat
+    skewedmat[,3] <- qnorm(1-(1-Alpha)/2,thetahat,shat)
+  }else{
+    snparam <- lapply(1:length(thetahat), function(i){as.numeric(gr.cp.to.dp(c(thetahat[i],shat[i],sign(skew[i])*min(abs(skew[i]),0.94))))})
+    tmp <- lapply(1:length(thetahat), function(i){c(qsn((1-Alpha)/2,snparam[[i]][1], snparam[[i]][2], snparam[[i]][3], engine = "biv.nt.prob"),thetahat[i],qsn(1-(1-Alpha)/2,snparam[[i]][1], snparam[[i]][2], snparam[[i]][3], engine = "biv.nt.prob"))})
+    skewedmat <- as.matrix(do.call("rbind", tmp))
+  }
   
   ## return output
   ## TODO: discuss with Tak and sync output
