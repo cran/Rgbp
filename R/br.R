@@ -3,11 +3,18 @@ BRInitialValue2ndLevelMeanKnown <- function(given) {
   # "Kn" means the descriptive second level mean (mean of Beta distribution) is known.
 
   if (given$prior.mean == 0) {
-    r.ini <- mean(given$sample.mean) * (1 - mean(given$sample.mean)) / var(given$sample.mean)
+    if(all(given$sample.mean == mean(given$sample.mean))) {
+      r.ini <- mean(given$sample.mean) * (1 - mean(given$sample.mean)) / (var(given$sample.mean) + 0.1)
+    } else {
+      r.ini <- mean(given$sample.mean) * (1 - mean(given$sample.mean)) / var(given$sample.mean)
+    }
   } else {
-    r.ini <- given$prior.mean * (1 - given$prior.mean) / var(given$sample.mean)
+    if(all(given$sample.mean == mean(given$sample.mean))) {
+      r.ini <- given$prior.mean * (1 - given$prior.mean) / (var(given$sample.mean) + 0.1)
+    } else {
+      r.ini <- given$prior.mean * (1 - given$prior.mean) / var(given$sample.mean)
+    }
   }
-
   list(r.ini = r.ini, a.ini = -log(r.ini))
 }
 
@@ -42,7 +49,12 @@ BRInitialValue2ndLevelMeanUnknown <- function(given) {
   }	
 
   p0.ini <- mean(exp(x %*% b.ini) / (1 + exp(x %*% b.ini)))
-  r.ini <- p0.ini * (1 - p0.ini) / var(y) 
+
+  if(all(y == mean(y))) {
+    r.ini <- p0.ini * (1 - p0.ini) / (var(y) + 0.1)
+  } else {
+    r.ini <- p0.ini * (1 - p0.ini) / var(y)
+  }
   list(x = x, b.ini = b.ini, a.ini = -log(r.ini))
 }
 
@@ -86,6 +98,7 @@ BRAlphaEst2ndLevelMeanKnown <- function(given, ini) {
   list(a.new = a.ini, a.var = - 1 / hessian)
 }
 
+
 BRAlphaBetaEst2ndLevelMeanUnknown <- function(given, ini) {
   # Alpha and Beta estimation of BRIMM when the second level mean is unknown
 
@@ -121,6 +134,8 @@ BRAlphaBetaEst2ndLevelMeanUnknown <- function(given, ini) {
     nzaq <- n - z + exp(-a) * q
     ap <- exp(-a) * p 
     aq <- exp(-a) * q
+    vec <- rep(NA, k)
+    diagm <- rep(NA, k)
     if (any(c(ap, aq, zap, nzaq) == 0)) {
       vec[(ap == 0 | aq == 0 | zap == 0 | nzaq == 0)] <- 0
       tmp <- !(ap == 0 | aq == 0 | zap == 0 | nzaq == 0)
@@ -130,19 +145,19 @@ BRAlphaBetaEst2ndLevelMeanUnknown <- function(given, ini) {
       vec <- (digamma(zap) - digamma(ap) - digamma(nzaq) + digamma(aq)) * exp(-a) * p * q
     }
     if (any(c(ap, aq, zap, nzaq) == 0)) {
-      diag[(ap == 0 | aq == 0 | zap == 0 | nzaq == 0)] <- 0
+      diagm[(ap == 0 | aq == 0 | zap == 0 | nzaq == 0)] <- 0
       tmp <- !(ap == 0 | aq == 0 | zap == 0 | nzaq == 0)
-      diag[tmp] <- ((trigamma(zap[tmp]) - trigamma(ap[tmp]) + trigamma(nzaq[tmp]) - trigamma(aq[tmp])) 
+      diagm[tmp] <- ((trigamma(zap[tmp]) - trigamma(ap[tmp]) + trigamma(nzaq[tmp]) - trigamma(aq[tmp])) 
                     * exp(-a) * p[tmp] * q[tmp] 
                     + (digamma(zap[tmp]) - digamma(ap[tmp]) - digamma(nzaq[tmp]) + digamma(aq[tmp])) 
                     * (q[tmp] - p[tmp])) * exp(-a) * p[tmp] * q[tmp]
     } else {
-      diag <- ((trigamma(z + exp(-a) * p) - trigamma(exp(-a) * p) 
+      diagm <- ((trigamma(z + exp(-a) * p) - trigamma(exp(-a) * p) 
                 + trigamma(n - z + exp(-a) * q) - trigamma(exp(-a) * q)) * exp(-a) * p * q +
                (digamma(z + exp(-a) * p) - digamma(exp(-a) *p)
                 - digamma(n - z + exp(-a) * q) + digamma(exp(-a) * q)) * (q - p)) * exp(-a) * p * q
     }
-    out <- cbind(t(x) %*% as.vector(vec), t(x) %*% diag(as.numeric(diag)) %*% x)
+    out <- cbind(t(x) %*% as.vector(vec), t(x) %*% diag(as.numeric(diagm)) %*% x)
     out
   } 
 
@@ -154,20 +169,21 @@ BRAlphaBetaEst2ndLevelMeanUnknown <- function(given, ini) {
     nzaq <- n - z + exp(-a) * q
     ap <- exp(-a) * p 
     aq <- exp(-a) * q
+    diagm <- rep(NA, k)
     if (any(c(ap, aq, zap, nzaq) == 0)) {
-      diag[(ap == 0 | aq == 0 | zap == 0 | nzaq == 0)] <- 0
+      diagm[(ap == 0 | aq == 0 | zap == 0 | nzaq == 0)] <- 0
       tmp <- !(ap == 0 | aq == 0 | zap == 0 | nzaq == 0)
-      diag[tmp] <- ((trigamma(zap[tmp]) - trigamma(ap[tmp]) + trigamma(nzaq[tmp]) - trigamma(aq[tmp])) 
+      diagm[tmp] <- ((trigamma(zap[tmp]) - trigamma(ap[tmp]) + trigamma(nzaq[tmp]) - trigamma(aq[tmp])) 
                     * exp(-a) * p[tmp] * q[tmp] 
                     + (digamma(zap[tmp]) - digamma(ap[tmp]) - digamma(nzaq[tmp]) + digamma(aq[tmp])) 
                     * (q[tmp] - p[tmp])) * exp(-a) * p[tmp] * q[tmp]
     } else {
-      diag <- ((trigamma(z + exp(-a) * p) - trigamma(exp(-a) * p) 
+      diagm <- ((trigamma(z + exp(-a) * p) - trigamma(exp(-a) * p) 
                 + trigamma(n - z + exp(-a) * q) - trigamma(exp(-a) * q)) * exp(-a) * p * q +
                (digamma(z + exp(-a) * p) - digamma(exp(-a) *p)
                 - digamma(n - z + exp(-a) * q) + digamma(exp(-a) * q)) * (q - p)) * exp(-a) * p * q
     }
-    out <- t(x) %*% diag(as.numeric(diag)) %*% x
+    out <- t(x) %*% diag(as.numeric(diagm)) %*% x
     out
   } 
 
@@ -194,7 +210,6 @@ BRAlphaBetaEst2ndLevelMeanUnknown <- function(given, ini) {
     b.sub.a <-  BetaHatSubAlpha(a)$beta.new
     a + BRLogLikUn(a, b.sub.a) - 0.5 * log(det(-BRDerivBeta2order(a, b.sub.a)))
   }
-
   a.temp <- optim(a.ini, MarginalPostAlpha, control = list(fnscale = -1), method= "L-BFGS-B",
                   hessian = TRUE,  lower = -Inf, upper = Inf)
   a.new <- a.temp$par
@@ -424,58 +439,58 @@ BRIS <- function(given, ini, a.res, n.IS = 5000, df.IS = 4, trial.scale = 2.5) {
   }
 
   optimax <- optimize(SkewedNormal, lower = -10, upper = 0, maximum = TRUE)$maximum
-  a.IS <- rsn(n.IS, location = a.new + abs(a.new - optimax), scale = trial.scale, shape = -3)
+  a.IS <- rsn(n.IS * 10, location = a.new + abs(a.new - optimax), scale = trial.scale, shape = -3)
   a.IS.den <- dsn(a.IS, location = a.new + abs(a.new - optimax), 
                   scale = trial.scale, shape = -3)
 
-  beta.IS.temp <- sapply(1 : n.IS, function(t) { 
+  beta.IS.temp <- sapply(1 : (n.IS * 10), function(t) { 
                     BetaHatSubAlpha(a.IS[t])
                   })
 
-  beta.IS.mean <- sapply(1 : n.IS, function(t) {
+  beta.IS.mean <- sapply(1 : (n.IS * 10), function(t) {
                      beta.IS.temp[, t]$beta.new
                    })
 
-  beta.IS.vCov <- sapply(1 : n.IS, function(t) {
+  beta.IS.vCov <- sapply(1 : (n.IS * 10), function(t) {
                      -solve(beta.IS.temp[, t]$beta.hessian)
                   })
 
   if(m == 1) {
-    beta.IS <- sapply(1 : n.IS, function(t) {
+    beta.IS <- sapply(1 : (n.IS * 10), function(t) {
                  beta.IS.mean[t] + sqrt(beta.IS.vCov[t] * (df.IS - 2) / df.IS) * rt(1, df = df.IS)
                })
 
-    beta.IS.den <- sapply(1 : n.IS, function(t) {
+    beta.IS.den <- sapply(1 : (n.IS * 10), function(t) {
       dt( (beta.IS[t] - beta.IS.mean[t]) / sqrt(beta.IS.vCov[t] * (df.IS - 2) / df.IS), df = df.IS) /
       sqrt(beta.IS.vCov[t] * (df.IS - 2) / df.IS)
     })
 
-    ab.logpost <- sapply(1 : n.IS, function(t) { 
+    ab.logpost <- sapply(1 : (n.IS * 10), function(t) { 
                     BRLogLikUn(a.IS[t], beta.IS[t]) + a.IS[t]
                   })
 
-    p0.IS <- sapply(1 : n.IS, function(t) { exp(x * beta.IS[t]) / (1 + exp(x * beta.IS[t]))})
+    p0.IS <- sapply(1 : (n.IS * 10), function(t) { exp(x * beta.IS[t]) / (1 + exp(x * beta.IS[t]))})
 
   } else {
-    beta.IS <- sapply(1 : n.IS, function(t) {
+    beta.IS <- sapply(1 : (n.IS * 10), function(t) {
       rmt(1, mean = beta.IS.mean[, t], S = matrix(beta.IS.vCov[, t], nrow = m) * (df.IS - 2) / df.IS,
           df = df.IS)
     })
 
-    beta.IS.den <- sapply(1 : n.IS, function(t) {
+    beta.IS.den <- sapply(1 : (n.IS * 10), function(t) {
       ch <- chol(matrix(beta.IS.vCov[, t], ncol = m) * (df.IS - 2) / df.IS)
       dmt(beta.IS[, t], mean = beta.IS.mean[, t], S = t(ch) %*% ch, df = df.IS)
     })
 
-    ab.logpost <- sapply(1 : n.IS, function(t) { 
+    ab.logpost <- sapply(1 : (n.IS * 10), function(t) { 
                     BRLogLikUn(a.IS[t], beta.IS[, t]) + a.IS[t]
                   })
 
-    p0.IS <- sapply(1 : n.IS, function(t) { exp(x %*% beta.IS[, t]) / (1 + exp(x %*% beta.IS[, t]))})
+    p0.IS <- sapply(1 : (n.IS * 10), function(t) { exp(x %*% beta.IS[, t]) / (1 + exp(x %*% beta.IS[, t]))})
 
   }
 
-  p.IS <- sapply(1 : n.IS, function(t) {
+  p.IS <- sapply(1 : (n.IS * 10), function(t) {
             a1.p.IS <- exp(-a.IS)[t] * p0.IS[, t] + z
             a0.p.IS <- exp(-a.IS)[t] * (1 - p0.IS[, t]) + n - z
             rbeta(k, a1.p.IS, a0.p.IS)
@@ -483,7 +498,7 @@ BRIS <- function(given, ini, a.res, n.IS = 5000, df.IS = 4, trial.scale = 2.5) {
 
   weight <- exp(ab.logpost - max(ab.logpost)) / beta.IS.den / a.IS.den
 
-  index <- suppressWarnings(sample(1 : n.IS, n.IS, prob = weight / sum(weight), replace = T))
+  index <- suppressWarnings(sample(1 : (n.IS * 10), n.IS, prob = weight / sum(weight), replace = T))
 
   p.IS.resample <- p.IS[, index]
 
@@ -520,15 +535,15 @@ BRIS2ndLevelMeanKnown <- function(given, ini, a.res, n.IS = 5000, df.IS = 4, tri
   }
 
   optimax <- optimize(SkewedNormal, lower = -10, upper = 0, maximum = TRUE)$maximum
-  a.IS <- rsn(n.IS, location = a.new + abs(a.new - optimax), scale = trial.scale, shape = -3)
+  a.IS <- rsn(n.IS * 10, location = a.new + abs(a.new - optimax), scale = trial.scale, shape = -3)
   a.IS.den <- dsn(a.IS, location = a.new + abs(a.new - optimax), 
                   scale = trial.scale, shape = -3)
 
-  a.logpost <- sapply(1 : n.IS, function(t) { 
+  a.logpost <- sapply(1 : (n.IS * 10), function(t) { 
                     BRLogLikKn(a.IS[t]) + a.IS[t]
                   })
 
-  p.IS <- sapply(1 : n.IS, function(t) {
+  p.IS <- sapply(1 : (n.IS * 10), function(t) {
             a1.p.IS <- exp(-a.IS)[t] * p0 + z
             a0.p.IS <- exp(-a.IS)[t] * (1 - p0) + n - z
             rbeta(k, a1.p.IS, a0.p.IS)
@@ -536,7 +551,7 @@ BRIS2ndLevelMeanKnown <- function(given, ini, a.res, n.IS = 5000, df.IS = 4, tri
 
   weight <- exp(a.logpost) / a.IS.den
 
-  index <- suppressWarnings(sample(1 : n.IS, n.IS, prob = weight / sum(weight), replace = T))
+  index <- suppressWarnings(sample(1 : (n.IS * 10), n.IS, prob = weight / sum(weight), replace = T))
   
   p.IS.resample <- p.IS[, index]
 
