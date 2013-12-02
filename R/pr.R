@@ -2,7 +2,11 @@ PRInitialValue2ndLevelMeanKnown <- function(given) {
   # This function makes the initial values needed to run PRIMM.
   # "Kn" means the descriptive second level mean (mean of Beta distribution) is known.
  
-  r.ini <- given$prior.mean / var(given$sample.mean)
+  if (all(given$sample.mean == mean(given$sample.mean))) {
+    r.ini <- given$prior.mean / (var(given$sample.mean) + 1)
+  } else {
+    r.ini <- given$prior.mean / var(given$sample.mean)
+  }
 
   list(a.ini = -log(r.ini))
 }
@@ -38,13 +42,16 @@ PRInitialValue2ndLevelMeanUnknown <- function(given) {
   }	
 
   mu0.ini <- mean(exp(x %*% b.ini))
-  r.ini <- mu0.ini / var(y)
+
+  if (all(y == mean(y))) {
+    r.ini <- mu0.ini / (var(y) + 1)
+  } else {
+    r.ini <- mu0.ini / var(y)
+  }
 
   list(x = x, b.ini = b.ini, a.ini = -log(r.ini))
 }
-
 PRAlphaEst2ndLevelMeanKnown <- function(given, ini) {
-  # Alpha estimation of PRIMM when the descriptive second level mean is known
 
   z <- given$z
   n <- given$n
@@ -52,27 +59,28 @@ PRAlphaEst2ndLevelMeanKnown <- function(given, ini) {
   k <- length(n)
   a.ini <- ini$a.ini
 
-  PRLogLikKn <- function (a) { 
+  PRDerivAlpha <- function(a) {
     zam <- z + exp(-a) * mu0
     am <- exp(-a) * mu0
-    if (any(c(am, zam) <= 0)) {
-      print("The components of lgamma should be positive")
-      stop()
-    } else {
-      sum(dnbinom(z, size = am, prob = exp(-a) / (exp(-a) + n), log = T))
-    }
+    const1 <- ((digamma(zam) - digamma(am) + n / (exp(-a) + n) - log(1 + n * exp(a))) * mu0
+               - z / (exp(-a) + n))
+    const3 <- (const1 + z * exp(-a) / (exp(-a) + n)^2 + mu0 * n / (n + exp(-a))
+              - n * am / (exp(-a) + n)^2 + am * mu0 * (trigamma(zam) - trigamma(am)))
+    out <- c(1 - exp(-a) * sum(const1), exp(-a) * sum(const3))
+    out
   }
 
-  PostAlpha <- function(a) {
-    a + PRLogLikKn(a)
+  dif <- 1
+  eps <- 0.0001
+  while (abs(dif) > eps) {
+    out1 <- PRDerivAlpha(a.ini)
+    score <- out1[1]
+    hessian <- out1[2]
+    dif <- score / hessian
+    a.ini <- a.ini - dif
   }
 
-  a.temp <- optim(a.ini, PostAlpha, control = list(fnscale = -1), method= "L-BFGS-B",
-                  hessian = TRUE,  lower = -Inf, upper = Inf)
-  a.new <- a.temp$par
-  a.hess <- a.temp$hessian
-
-  list(a.new = a.ini, a.var = - 1/ a.hess)
+  list(a.new = a.ini, a.var = - 1 / hessian)
 }
 
 PRAlphaBetaEst2ndLevelMeanUnknown <- function(given, ini) {
