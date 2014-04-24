@@ -1,8 +1,8 @@
-4e0ae68a0e9dd4cfd16ba7e2a4a3eb58 *DESCRIPTION
+d0f65361c8f86a26ced06ffbd8c4fd7b *DESCRIPTION
 e80f404e2a9969fe40156f9a54b61eee *NAMESPACE
 a7eb796fd210fa802adf6c6ec257ba3b *R/br.R
-0cbe5ab720e23ebf836978ee933dfa42 *R/coverage.R
-719b2c134917b269957a663252dedf7f *R/gbp.R
+c0df1ef1d8d4086fc18890b8bb43222f *R/coverage.R
+14d285055fa1546a35a83898bbc409be *R/gbp.R
 aaaf6015b78a8ad73dc5aeeab9e705fb *R/gr.R
 85922a546cd48c0364d04a8401e4d67f *R/pr.R
 02950603fc1becc710ba48456faf9d03 *data/baseball.RData
