@@ -1,24 +1,30 @@
 ######
-gbp <- function(x, w, covariates, mean.PriorDist, model, intercept, Alpha, n.IS, n.SIR, 
-                trial.scale, save.result, ISBetaApprox, normal.CI) UseMethod("gbp")
+gbp <- function(y, se.or.n, covariates, mean.PriorDist, model, intercept, Alpha, n.AR, n.AR.factor,
+                trial.scale, save.result, normal.CI, t, u) UseMethod("gbp")
 ######
-gbp.default <- function(x, w, covariates, mean.PriorDist, model = "gaussian", 
+gbp <- function(y, se.or.n, covariates, mean.PriorDist, model = "gaussian", 
                         intercept = TRUE, Alpha = 0.95, 
-                        n.IS = 0, n.SIR = 0, trial.scale = 3, save.result = TRUE, 
-                        ISBetaApprox = FALSE, normal.CI = FALSE) {
+                        n.AR = 0, n.AR.factor = 4, trial.scale = NA, save.result = TRUE, 
+                        normal.CI = FALSE, t = 0, u = 1) {
 
   ##input checks
-  if(model == "poisson" & missing(mean.PriorDist))
+  if(model == "poisson" & missing(mean.PriorDist)) {
     warning("Model is Poisson and the prior mean is unknown. This program can not yet give reliable results for this data. If the Poisson is being used as an approximation to the Binomial and the exposures are known then please assume a Binomial model")
+  }  
   
+  if(intercept == "FALSE" & missing(covariates)) {
+    warning("When there are no covariates and no intercept term, model cannot fit the model. Please set the argument mean.PriorDist or use the intercept term.")
+    stop()
+  }  
   
-######
+  ######
   res <- switch(model, 
-       gaussian = gr(x, w, X = covariates, mu = mean.PriorDist, Alpha = Alpha, intercept = intercept, 
+       gaussian = gr(y, se.or.n, X = covariates, mu = mean.PriorDist, Alpha = Alpha, intercept = intercept, 
                      normal.CI = normal.CI), 
-       binomial = br(x, w, X = covariates, prior.mean = mean.PriorDist, intercept = intercept, Alpha = Alpha,
-                     n.IS = n.IS, n.SIR = n.SIR, trial.scale = trial.scale, save.result = TRUE, ISBetaApprox = FALSE), 
-       poisson = pr(x, w, X = covariates, prior.mean = mean.PriorDist, intercept = intercept, Alpha = Alpha))
+       binomial = br(y, se.or.n, X = covariates, prior.mean = mean.PriorDist, intercept = intercept, Alpha = Alpha,
+                     n.AR = n.AR, n.AR.factor = n.AR.factor, trial.scale = trial.scale, save.result = TRUE,
+                     t = t, u = u), 
+       poisson = pr(y, se.or.n, X = covariates, prior.mean = mean.PriorDist, intercept = intercept, Alpha = Alpha))
   
   class(res) <- "gbp"	
   res
@@ -74,11 +80,15 @@ print.gbp <- function(x, sort = TRUE, ...) {
   }
   
   if (sort == TRUE) {
-    temp <- temp[order(temp[, 2]), ]
+    if (x$model == "gr") {
+      temp <- temp[order(temp[, 2], decreasing = TRUE), ]
+    } else {
+      temp <- temp[order(temp[, 2]), ]
+    }
   }
 
   temp.mean <- colMeans(temp)
-  temp <- data.frame(rbind(temp, temp.mean), row.names = c(rownames(temp), "colMeans"))
+  temp <- data.frame(rbind(temp, temp.mean), row.names = c(rownames(temp), "Mean"))
   temp[, 1] <- format.default(temp[, 1], digits = 3)
   temp[dim(temp)[1], 1] <- ""
 
@@ -94,12 +104,12 @@ print.gbp <- function(x, sort = TRUE, ...) {
 
   if (sort == TRUE) {
     if (x$model == "gr") {
-      cat("Summary for each unit (sorted by se): \n")
+      cat("Summary for each group (sorted by the descending order of se): \n")
     } else {
-      cat("Summary for each unit (sorted by n): \n")
+      cat("Summary for each group (sorted by  the ascending order of n): \n")
     }
   } else {
-    cat("Summary for each unit: \n")
+    cat("Summary for each group: \n")
   }
 
   cat("\n")
@@ -167,25 +177,25 @@ summary.gbp <- function(object, ...) {
       summary.table <- temp2[c(1, (dim(temp2)[1] + 1) / 2, dim(temp2)[1]), ]
       number.of.medians <- dim(summary.table)[1] - 2
       if (number.of.medians == 1) {
-        row.names(summary.table) <- c("Unit with min(obs.mean)", 
-                                      "Unit with median(obs.mean)", 
-                                      "Unit with max(obs.mean)")
+        row.names(summary.table) <- c("Group with min(obs.mean)", 
+                                      "Group with median(obs.mean)", 
+                                      "Group with max(obs.mean)")
       } else {  # if there are more than one median
-        row.names(summary.table) <- c("Unit with min(obs.mean)", 
-                                     paste("Unit with median(obs.mean)", 1 : number.of.medians, sep = ""),
-                                     "Unit with max(obs.mean)")
+        row.names(summary.table) <- c("Group with min(obs.mean)", 
+                                     paste("Group with median(obs.mean)", 1 : number.of.medians, sep = ""),
+                                     "Group with max(obs.mean)")
       }
     } else {  # if number of groups is even
       summary.table <- temp2[c(1, dim(temp2)[1] / 2, dim(temp2)[1] / 2 + 1, dim(temp2)[1]), ]
       number.of.medians <- dim(summary.table)[1] - 2
       if (number.of.medians == 1) {
-        row.names(summary.table) <- c("Unit with min(obs.mean)", 
-                                      "Unit with median(obs.mean)", 
-                                      "Unit with max(obs.mean)")
+        row.names(summary.table) <- c("Group with min(obs.mean)", 
+                                      "Group with median(obs.mean)", 
+                                      "Group with max(obs.mean)")
       } else {  # if there are more than one median
-        row.names(summary.table) <- c("Unit with min(obs.mean)", 
-                                     paste("Unit with median(obs.mean)", 1 : number.of.medians, sep = ""),
-                                     "Unit with max(obs.mean)")
+        row.names(summary.table) <- c("Group with min(obs.mean)", 
+                                     paste("Group with median(obs.mean)", 1 : number.of.medians, sep = ""),
+                                     "Group with max(obs.mean)")
       }
     }
   } else { # if n or se are different from each group
@@ -197,19 +207,19 @@ summary.gbp <- function(object, ...) {
       number.of.medians <- dim(summary.table)[1] - 2
       if (object$model == "gr") {
         if (number.of.medians == 1) {
-          row.names(summary.table) <- c("Unit with min(se)", "Unit with median(se)", "Unit with max(se)")
+          row.names(summary.table) <- c("Group with min(se)", "Group with median(se)", "Group with max(se)")
         } else {
-          row.names(summary.table) <- c("Unit with min(se)", 
-                                       paste("Unit with median(se)", 1 : number.of.medians, sep = ""),
-                                       "Unit with max(se)")
+          row.names(summary.table) <- c("Group with min(se)", 
+                                       paste("Group with median(se)", 1 : number.of.medians, sep = ""),
+                                       "Group with max(se)")
         }
       } else {  # if model is not "gr"
         if (number.of.medians == 1) {
-          row.names(summary.table) <- c("Unit with min(n)", "Unit with median(n)", "Unit with max(n)")
+          row.names(summary.table) <- c("Group with min(n)", "Group with median(n)", "Group with max(n)")
         } else {
-          row.names(summary.table) <- c("Unit with min(n)", 
-                                       paste("Unit with median(n)", 1 : number.of.medians, sep = ""),
-                                       "Unit with max(n)")
+          row.names(summary.table) <- c("Group with min(n)", 
+                                       paste("Group with median(n)", 1 : number.of.medians, sep = ""),
+                                       "Group with max(n)")
         }
       }
 
@@ -218,19 +228,19 @@ summary.gbp <- function(object, ...) {
       number.of.medians <- dim(summary.table)[1] - 2
       if (object$model == "gr") {
         if (number.of.medians == 1) {
-          row.names(summary.table) <- c("Unit with min(se)", "Unit with median(se)", "Unit with max(se)")
+          row.names(summary.table) <- c("Group with min(se)", "Group with median(se)", "Group with max(se)")
         } else {
-          row.names(summary.table) <- c("Unit with min(se)", 
-                                       paste("Unit with median(se)", 1 : number.of.medians, sep = ""),
-                                       "Unit with max(se)")
+          row.names(summary.table) <- c("Group with min(se)", 
+                                       paste("Group with median(se)", 1 : number.of.medians, sep = ""),
+                                       "Group with max(se)")
         }
       } else {  # if model is not "gr"
         if (number.of.medians == 1) {
-          row.names(summary.table) <- c("Unit with min(n)", "Unit with median(n)", "Unit with max(n)")
+          row.names(summary.table) <- c("Group with min(n)", "Group with median(n)", "Group with max(n)")
         } else {
-          row.names(summary.table) <- c("Unit with min(n)", 
-                                       paste("Unit with median(n)", 1 : number.of.medians, sep = ""),
-                                       "Unit with max(n)")
+          row.names(summary.table) <- c("Group with min(n)", 
+                                       paste("Group with median(n)", 1 : number.of.medians, sep = ""),
+                                       "Group with max(n)")
         }
       }
     }
@@ -255,19 +265,23 @@ summary.gbp <- function(object, ...) {
   post.sd.alpha <- sqrt(object$a.var)
   if (object$model == "gr") {
     post.mode.A <- exp(object$a.new)
-    result2 <- data.frame(post.mode.alpha, post.sd.alpha, post.mode.A)
+    result2 <- data.frame(post.mode.alpha, post.sd.alpha, post.mode.A, row.names = "")
   } else {
     post.mode.r <- exp(-object$a.new)
-    result2 <- data.frame(post.mode.alpha, post.sd.alpha, post.mode.r)
+    result2 <- data.frame(post.mode.alpha, post.sd.alpha, post.mode.r, row.names = "")
   }
 
+  if (object$model == "br" & length(object$weight) != 1) {
+    post.median.r <- median(exp(-object$alpha))
+    post.median.alpha <- median(object$alpha)
+    post.sd.alpha <- sd(object$alpha)
+    result2 <- data.frame(post.median.alpha, post.sd.alpha, post.median.r, row.names = "")
+  }
+  
   if (any(is.na(object$prior.mean))) {
     estimate <- as.vector(object$beta.new)
-    if (object$intercept == TRUE) {
-      names(estimate) <- paste("beta", 0 : (length(estimate) - 1), sep = "")
-    } else {
-      names(estimate) <- paste("beta", 1 : (length(estimate)), sep = "")
-    }
+    names(estimate) <- paste("beta", 1 : length(estimate), sep = "")
+
     if ((sum(is.na(object$weight)) == 1)) {
       se <- as.vector(sqrt(diag(object$beta.var)))
     } else {
@@ -295,7 +309,7 @@ print.summary.gbp <- function(x, ...) {
     print(x$main)
     cat("\n")
     cat("\n")
-    cat("Second-level Variance Component Estimation Summary:\n")
+    cat("Estimation summary for the second-level variance component:\n")
     cat("alpha = log(A) for Gaussian or alpha = log(1/r) for Binomial and Poisson data:\n")
     cat("\n")
     print(x$sec.var)
@@ -307,14 +321,14 @@ print.summary.gbp <- function(x, ...) {
     print(x$main)
     cat("\n")
     cat("\n")
-    cat("Second-level Variance Component Estimation Summary:\n")
+    cat("Estimation summary for the second-level variance component:\n")
     cat("alpha = log(A) for Gaussian or alpha =  log(1/r) for Binomial and Poisson data:\n")
     cat("\n")
     print(x$sec.var)
     options(digits = 7)
     cat("\n")
     cat("\n")
-    cat("Regression Summary:\n")
+    cat("Estimation summary for the regression coefficient :\n")
     cat("\n")
     print(round(x$reg, 3))
   }
@@ -337,7 +351,11 @@ plot.gbp <- function(x, sort = TRUE, ...) {
 
   if (sort == TRUE) {
     temp.data <- as.data.frame(cbind(y, se, pr.m, po.m, po.sd, po.low, po.upp))
-    temp.data <- temp.data[order(temp.data$se), ]
+    if (x$model == "gr") {
+      temp.data <- temp.data[order(temp.data$se, decreasing = TRUE), ]
+    } else {
+      temp.data <- temp.data[order(temp.data$se), ]
+    }
     y <- temp.data$y
     se <- temp.data$se
     pr.m <- temp.data[, 3]
@@ -364,7 +382,7 @@ plot.gbp <- function(x, sort = TRUE, ...) {
   xmax <- max(c(y, po.m, pr.m))
   
   sunflowerplot(rep(4, length(y)) ~ y, ylim = c(-1, 5), xlim = c(xmin - abs(xmin) * 0.1, 
-                xmax + abs(xmax) * 0.1), yaxt = "n", col.lab = "white", main = "Shrinkage Plot", pch=1,cex=1)
+                xmax + abs(xmax) * 0.1), yaxt = "n", col.lab = "white", main = "Shrinkage plot", pch=1,cex=1)
   
   if (length(unique(pr.m)) == 1) {
     abline(v = pr.m, col = 4)
@@ -394,16 +412,16 @@ plot.gbp <- function(x, sort = TRUE, ...) {
 
   if (sort == TRUE) {
     if (x$model == "gr") {
-      xl <- c("Units sorted by the ascending order of se")
+      xl <- c("Groups sorted by the descending order of se")
     } else {
-      xl <- c("Units sorted by the ascending order of n")
+      xl <- c("Groups sorted by the ascending order of n")
     }
   } else {
-    xl <- c("Units sorted by the ascending order of n")
+    xl <- c("Groups in the order of data input")
   }
 
   plot(index, po.m, ylim = c(ylim.low, ylim.upp), xlab = xl, ylab = "",
-       main = paste(100 * x$Alpha, "% Interval Plot"), 
+       main = paste(100 * x$Alpha, "% Interval plot"), 
        col = 2, pch = 19)
   sapply(1 : length(y), function(j) {
     lines(rep(index[j], 2), c(po.low[j], po.upp[j]), lwd = 0.5)
@@ -418,14 +436,31 @@ plot.gbp <- function(x, sort = TRUE, ...) {
   }
 
   ## legend
-  se.or.n <- "standard error"
-  par(fig = c(0, 0.35, 0.5, 1), xaxs = "r", yaxs = "r", mai = c(0.4, 0.1, 0.5, 0), las = 1, ps = 13,
-      oma = c(0, 0, 0, 0), new = TRUE)  
-  plot(1, type="n", axes=F, xlab="", ylab="")
+  if (x$model == "gr") {
+    se.or.n <- "Standard error"
+  } else {
+    se.or.n <- "Group size (n)"
+  }
+
+  if (x$model == "br" & length(x$weight) != 1) { 
+    par(fig = c(0, 0.35, 0.5, 1), xaxs = "r", yaxs = "r", mai = c(0.4, 0.1, 0.5, 0), las = 1, ps = 9,
+        oma = c(0, 0, 0, 0), new = TRUE)  
+    plot(1, type="n", axes=F, xlab="", ylab="")
     legend("topleft", pch = c(19, 1, NA, NA, NA,0), col = c(2, 1, 4,"darkviolet", "darkgreen",1), 
-         lwd = c(NA, NA, 2, 2, 2), 
-         c("posterior mean", "sample mean", "prior mean", se.or.n, "posterior sd", "crossover"),
-         seg.len = 0.5, bty = "n",xpd=TRUE)
+           lwd = c(NA, NA, 2, 2, 2), 
+           c("Posterior mean \nof random effect", "Sample mean", 
+             "Posterior mean of\nexpected random effect", se.or.n, 
+             "Posterior sd \nof random effect", "Crossover"),
+           seg.len = 0.5, bty = "n",xpd = TRUE)
+  } else {
+    par(fig = c(0, 0.35, 0.5, 1), xaxs = "r", yaxs = "r", mai = c(0.4, 0.1, 0.5, 0), las = 1, ps = 13,
+        oma = c(0, 0, 0, 0), new = TRUE)  
+    plot(1, type="n", axes=F, xlab="", ylab="")
+    legend("topleft", pch = c(19, 1, NA, NA, NA,0), col = c(2, 1, 4,"darkviolet", "darkgreen",1), 
+           lwd = c(NA, NA, 2, 2, 2), 
+           c("Posterior mean", "Sample mean", "Prior mean", se.or.n, "Posterior sd", "Crossover"),
+           seg.len = 0.5, bty = "n",xpd = TRUE)
+  }
 
 
 }

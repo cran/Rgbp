@@ -62,11 +62,6 @@ gr<-function(y,se,X,mu,Alpha=0.95,intercept=T,eps=0.0001, normal.CI = FALSE){
     Betahat <- BetahatvarmX%*%DVAhati%*%y
     BetahatSE <- sqrt(diag(Betahatvar))
     mu<-X%*%Betahat
-    ##calculate posterior variance
-    #E <- eigen(DVAhat)
-    #W <- E$values
-    #Q <- E$vectors
-    #Z <- Q%*%diag(1/sqrt(W))%*%t(Q)
     Z <- sqrt(DVAhati)
     Phat<-Z%*%X%*%BetahatvarmX%*%Z
     p<-diag(Phat)
@@ -79,10 +74,7 @@ gr<-function(y,se,X,mu,Alpha=0.95,intercept=T,eps=0.0001, normal.CI = FALSE){
   skew<-((mu-y)^3*mu3-3*V*(mu-y)*v)/shat^3
   sqrtV<-sqrt(V)
   hmB <- length(Bhat)/sum(1/Bhat)
-  ## m4B <- (6*(a0^3 - a0^2*(2*a1-1) + a1^2*(a1+1)-2*a0*a1*(a1+2))/(a0*a1*(a0+a1+2)*(a0+a1+3)) + 3)*v^2
-  ## m4 <- 3*V^2*beta(a1+2,a0)/beta(a1,a0) + (mu-y)^4*m4B +6*(beta(a1+3,a0)/beta(a1,a0)*V*(y-mu)^2 - 2*beta(a1+2,a0)/beta(a1,a0)*(y-mu)^2*(1-a0/(a1+a0))*V + V*(1-a0/(a0+a1))^3*(y-mu)^2)
-  ## kurt <- m4/shat^2
-	
+
   ## calculate CIs using skewed normal
   ## TODO: use apply not loop
 
@@ -114,8 +106,9 @@ gr.ll.muknown<-function(A,y,V,mu,type){
 gr.ll.muunknown<-function(A,y,V,X,type){
   DVAi <- diag(1/(V+A))
   exp1 <- t(X)%*%DVAi%*%X
-  BetaA <- chol2inv(chol(exp1))%*%t(X)%*%DVAi%*%y
-  lla <- type*log(A)+sum(dnorm(x=y,mean=X%*%BetaA,sd=sqrt(V+A),log=TRUE)) - 1/2*log(det(exp1))
+  BetaA <- try(chol2inv(chol(exp1)) %*% t(X) %*% DVAi %*% y, silent=TRUE)
+  if (class(BetaA) == "try-error") lla <- -10^6
+  else lla <- type * log(A) + sum(dnorm(x=y, mean=X %*% BetaA, sd=sqrt(V+A), log=TRUE)) - 1/2*log(det(exp1))
   return(lla)
 }
 
@@ -157,14 +150,8 @@ derval <- function(alpha,y,V,X){
   l2 = log(A) - 1/2*sum(log(V+A)) + 1/2*log(det(Sigmam)) - 1/2*sum(wv*res^2)
 
   dlralphaBEVAL = 1 - A/2*sum(wv) + A/2*tr(exp1%*%X) + A/2*sum(wv^2*res^2)
-  ##dlralphaBEVAL2 = -A/2*sum(wv^2*V) + A/2*tr(Sigmam%*%t(X)%*%Wm^2%*%X) + A/2*sum(wv^2*(y-X%*%Betahat)^2) + A^2/2*tr((Sigmam%*%t(X)%*%Wm^2%*%X)%*%(Sigmam%*%t(X)%*%Wm^2%*%X)) - A^2*tr(Sigmam%*%t(X)%*%Wm^3%*%X) - A^2*sum(wv^3*(y-X%*%Betahat)^2)
-
   dbetahatA = exp1%*%res
-  ## dbetahatA2 = 2*Sigmam%*%t(X)%*%Wm^2%*%X%*%dbetahatA - 2*Sigmam%*%t(X)%*%Wm^3%*%(X%*%Betahat-y)
   dl2alpha = dlralphaBEVAL + A*sum(wv*res*X%*%dbetahatA)
-  ##dl2alpha2 = dlralphaBEVAL2 + A*sum(wv^2*V*(y-X%*%Betahat)*X%*%dbetahatA) - A^2*sum(wv*(X%*%dbetahatA)^2) + A^2*sum(wv*(y-X%*%Betahat)*X%*%dbetahatA2) - A^2*sum(wv^2*(y-X%*%Betahat)*X%*%dbetahatA)
-
-  ## return(list(alpha=alpha,l2=l2,dl2alpha=dl2alpha,dl2alpha2=dl2alpha2))
   return(dl2alpha=dl2alpha)
 }
 
