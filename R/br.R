@@ -2,7 +2,7 @@ BRInitialValue2ndLevelMeanKnown <- function(given) {
   # This function makes the initial values needed to run BRIMM.
   # "Kn" means the descriptive second level mean (mean of Beta distribution) is known.
 
-  if (given$prior.mean == 0) {
+  if (all(given$prior.mean == 0)) {
     if(all(given$sample.mean == mean(given$sample.mean))) {
       r.ini <- mean(given$sample.mean) * (1 - mean(given$sample.mean)) / (var(given$sample.mean) + 0.1)
     } else {
@@ -10,9 +10,9 @@ BRInitialValue2ndLevelMeanKnown <- function(given) {
     }
   } else {
     if(all(given$sample.mean == mean(given$sample.mean))) {
-      r.ini <- given$prior.mean * (1 - given$prior.mean) / (var(given$sample.mean) + 0.1)
+      r.ini <- mean(given$prior.mean) * (1 - mean(given$prior.mean)) / (var(given$sample.mean) + 0.1)
     } else {
-      r.ini <- given$prior.mean * (1 - given$prior.mean) / var(given$sample.mean)
+      r.ini <- mean(given$prior.mean) * (1 - mean(given$prior.mean)) / var(given$sample.mean)
     }
   }
   list(r.ini = r.ini, a.ini = -log(r.ini))
@@ -707,7 +707,7 @@ br <- function(z, n, X, prior.mean, intercept = TRUE, Alpha = 0.95, t = 0, u = 1
   given <- list(z = z, n = n, sample.mean = z / n, x.ini = X,
                 prior.mean = prior.mean, intercept = intercept, Alpha = Alpha)
 
-  if (is.na(prior.mean)) {
+  if (any(is.na(prior.mean))) {
     ini <- BRInitialValue2ndLevelMeanUnknown(given)
   } else {
     ini <- BRInitialValue2ndLevelMeanKnown(given)
@@ -715,7 +715,7 @@ br <- function(z, n, X, prior.mean, intercept = TRUE, Alpha = 0.95, t = 0, u = 1
 
   if (n.AR == 0) {
 
-    a.res <- if (is.na(prior.mean)) {
+    a.res <- if (any(is.na(prior.mean))) {
                BRAlphaBetaEst2ndLevelMeanUnknown(given, ini)
              } else {
                BRAlphaEst2ndLevelMeanKnown(given, ini)
@@ -723,7 +723,7 @@ br <- function(z, n, X, prior.mean, intercept = TRUE, Alpha = 0.95, t = 0, u = 1
 
     B.res <- BRShrinkageEst(a.res, given)
 
-    if (is.na(prior.mean)) {
+    if (any(is.na(prior.mean))) {
       post.res <- BRPosteriorEst2ndLevelMeanUnknown(B.res, a.res, ini, given)
     } else {
       post.res <- BRPosteriorEst2ndLevelMeanKnown(B.res,given)
@@ -741,7 +741,7 @@ br <- function(z, n, X, prior.mean, intercept = TRUE, Alpha = 0.95, t = 0, u = 1
 
   } else {
 
-    if (is.na(prior.mean)) {
+    if (any(is.na(prior.mean))) {
       res <- BRAR(given, ini, n.AR = n.AR, trial.scale = trial.scale, 
                   n.AR.factor = n.AR.factor, t = t, u = u)
     } else {
@@ -749,13 +749,13 @@ br <- function(z, n, X, prior.mean, intercept = TRUE, Alpha = 0.95, t = 0, u = 1
                                    n.AR.factor = n.AR.factor, t = t, u = u)
     }
 
-    if (is.na(prior.mean)) {
+    if (any(is.na(prior.mean))) {
       p0.mean <- res$prior.mean.hat
     } else {
       p0.mean <- given$prior.mean
     }
 
-    if (is.na(prior.mean)) {
+    if (any(is.na(prior.mean))) {
       b.mean <- res$beta.new
       b.var <- res$beta.var
       beta <- res$beta.sample
