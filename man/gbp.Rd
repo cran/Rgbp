@@ -44,11 +44,11 @@
   }
 
   \item{trial.scale}{
-    A scale used in the trial distribution of \eqn{\alpha}. If resultant weight has too mamy 0's, scale should be smaller than before. If resultant weight has too few 0's, scale should be larger than before. If there are relatively huge weights, scale should be larger than before. Default is NA.
+    A scale used in the trial distribution of \eqn{\alpha}. If resultant weight has too mamy 0's, scale should be smaller than before. If resultant weight has too few 0's, scale should be larger than before. If there are relatively huge weights, scale should be larger than before. Default is 1.3.
   }
 
   \item{save.result}{
-    Only for Binomial model with the acceptance-rejection sampling. If \code{save.result} is TRUE, all the results of weights and posterior samples will be saved in the gbp object. Default is TRUE.
+    Only for Binomial model with the acceptance-rejection sampling. \cr If \code{save.result} is TRUE, all the results of weights and posterior samples will be saved in the gbp object. Default is TRUE.
   }
 
   \item{normal.CI}{
@@ -147,8 +147,10 @@
 }
 
 \references{
+  Tak, H., Kelly, J., and Morris, C. (2017) Rgbp: An R Package for Gaussian, Poisson, and Binomial Random Effects Models with Frequency Coverage Evaluations. \emph{Journal of Statistical Software}. \bold{78}, 5, 1--33.
+
   Morris, C. and Lysy, M. (2012). Shrinkage Estimation in Multilevel Normal Models. 
-  \emph{Statistical Science}. \bold{27}. 115-134.
+  \emph{Statistical Science}. \bold{27}, 1, 115--134.
 }
 
 \author{
@@ -175,9 +177,9 @@
   # Gaussian Regression Interactive Multilevel Modeling (GRIMM) #
   ################################################################
 
-    ####################################################################################
-    # If we do not have any covariate and do not know a mean of the prior distribution #
-    ####################################################################################
+    ###################################################################################
+    # If we do not have any covariate and do not know a mean of the prior distribution#
+    ###################################################################################
 
     g <- gbp(y, se, model = "gaussian")
     g
@@ -191,7 +193,8 @@
     gcv <- coverage(g, nsim = 10)  
 
     ### gcv$coverageRB, gcv$coverage10, gcv$average.coverageRB, gcv$average.coverage10,
-    ### gcv$minimum.coverageRB, gcv$minimum.coverage10, gcv$raw.resultRB, gcv$raw.result10.
+    ### gcv$minimum.coverageRB, gcv$minimum.coverage10, gcv$raw.resultRB, 
+    ### gcv$raw.result10.
 
     ### when we want to simulate pseudo datasets based on different values of A
     ### and a regression coefficient (intercept), 
@@ -214,7 +217,8 @@
     gcv <- coverage(g, nsim = 10)  
  
     ### gcv$coverageRB, gcv$coverage10, gcv$average.coverageRB, gcv$average.coverage10,
-    ### gcv$minimum.coverageRB, gcv$minimum.coverage10, gcv$raw.resultRB, gcv$raw.result10.
+    ### gcv$minimum.coverageRB, gcv$minimum.coverage10, gcv$raw.resultRB, 
+    ### gcv$raw.result10.
 
     ### when we want to simulate pseudo datasets based on different values of A
     ### and regression coefficients, not using estimated values 
@@ -237,7 +241,8 @@
     gcv <- coverage(g, nsim = 10)  
 
     ### gcv$coverageRB, gcv$coverage10, gcv$average.coverageRB, gcv$average.coverage10,
-    ### gcv$minimum.coverageRB, gcv$minimum.coverage10, gcv$raw.resultRB, gcv$raw.result10.
+    ### gcv$minimum.coverageRB, gcv$minimum.coverage10, gcv$raw.resultRB, 
+    ### gcv$raw.result10.
 
     ### when we want to simulate pseudo datasets based on different values of A and
     ### 2nd level mean as true ones, not using estimated values as true ones.
@@ -247,9 +252,9 @@
   # Binomial Regression Interactive Multilevel Modeling (BRIMM) #
   ###############################################################
 
-    ####################################################################################
-    # If we do not have any covariate and do not know a mean of the prior distribution #
-    ####################################################################################
+    ###################################################################################
+    # If we do not have any covariate and do not know a mean of the prior distribution#
+    ###################################################################################
 
     b <- gbp(z, n, model = "binomial")
     b
@@ -263,7 +268,8 @@
     bcv <- coverage(b, nsim = 10)  
 
     ### bcv$coverageRB, bcv$coverage10, bcv$average.coverageRB, bcv$average.coverage10,
-    ### bcv$minimum.coverageRB, bcv$minimum.coverage10, bcv$raw.resultRB, bcv$raw.result10.
+    ### bcv$minimum.coverageRB, bcv$minimum.coverage10, bcv$raw.resultRB, 
+    ### bcv$raw.result10.
 
     ### when we want to simulate pseudo datasets based on different values of r
     ### and a regression coefficient (intercept), 
@@ -286,7 +292,8 @@
     bcv <- coverage(b, nsim = 10)  
 
     ### bcv$coverageRB, bcv$coverage10, bcv$average.coverageRB, bcv$average.coverage10,
-    ### bcv$minimum.coverageRB, bcv$minimum.coverage10, bcv$raw.resultRB, bcv$raw.result10.
+    ### bcv$minimum.coverageRB, bcv$minimum.coverage10, bcv$raw.resultRB, 
+    ### bcv$raw.result10.
 
     ### when we want to simulate pseudo datasets based on different values of r
     ### and regression coefficients, not using estimated values 
@@ -309,7 +316,8 @@
     bcv <- coverage(b, nsim = 10)  
 
     ### bcv$coverageRB, bcv$coverage10, bcv$average.coverageRB, bcv$average.coverage10,
-    ### bcv$minimum.coverageRB, bcv$minimum.coverage10, bcv$raw.resultRB, bcv$raw.result10.
+    ### bcv$minimum.coverageRB, bcv$minimum.coverage10, bcv$raw.resultRB, 
+    ### bcv$raw.result10.
 
     ### when we want to simulate pseudo datasets based on different values of r and
     ### 2nd level mean as true ones, not using estimated values as true ones.
@@ -335,7 +343,8 @@
     pcv <- coverage(p, nsim = 10)  
 
     ### pcv$coverageRB, pcv$coverage10, pcv$average.coverageRB, pcv$average.coverage10,
-    ### pcv$minimum.coverageRB, pcv$minimum.coverage10, pcv$raw.resultRB, pcv$raw.result10.
+    ### pcv$minimum.coverageRB, pcv$minimum.coverage10, pcv$raw.resultRB, 
+    ### pcv$raw.result10.
 
     ### when we want to simulate pseudo datasets based on different values of r and
     ### 2nd level mean as true ones, not using estimated values as true ones.
