@@ -1,6 +1,6 @@
-d61430e35f740fc5291e1cf61cb82c52 *DESCRIPTION
-02dd6621a96a5439f6e74db27accaae9 *NAMESPACE
-adec699ae3548ba2f612fca35518d094 *R/br.R
+ca8a32e56b7dda8a8a5aabc2c0e33e5a *DESCRIPTION
+8e4b7eb73767f5448ad02ab74c957db0 *NAMESPACE
+2d680bcda574e994e5d59887cc3d031b *R/br.R
 444096afc5bbab145d4e907baf859cfa *R/coverage.R
 8fed608f6b6107ce6a9cd49103dd236c *R/gbp.R
 be28d7492efd250bc2e5010d22cdfd7c *R/gr.R
@@ -9,7 +9,7 @@ be28d7492efd250bc2e5010d22cdfd7c *R/gr.R
 a17e21a370548ca763a388dd20a57414 *data/hospital.RData
 d914525dc1fe6b614aa1bede74ae65b2 *data/schools.RData
 6250d78b79080224ff19e8282f5db2dd *inst/CITATION
-f66ba2265dc0898a880504355127a8ee *man/Rgbp-package.Rd
+981c55323d54ba203345b57725935360 *man/Rgbp-package.Rd
 ead729309b4e9ce352dcb6b9dffe7f2e *man/baseball.Rd
 54e453f15c0dbbe4987ee903accfb28d *man/coverage.Rd
 46e391f4f043408f791c608a05e0861c *man/coverage.plot.Rd
