@@ -1,9 +1,9 @@
-ca8a32e56b7dda8a8a5aabc2c0e33e5a *DESCRIPTION
+b72bb4bd0cd90d5388c7692eccdfd646 *DESCRIPTION
 8e4b7eb73767f5448ad02ab74c957db0 *NAMESPACE
 2d680bcda574e994e5d59887cc3d031b *R/br.R
 444096afc5bbab145d4e907baf859cfa *R/coverage.R
 8fed608f6b6107ce6a9cd49103dd236c *R/gbp.R
-be28d7492efd250bc2e5010d22cdfd7c *R/gr.R
+a8eda7bb7cabad330e948197415d85d2 *R/gr.R
 66271357829f66f7883fc560f103e6e8 *R/pr.R
 02950603fc1becc710ba48456faf9d03 *data/baseball.RData
 a17e21a370548ca763a388dd20a57414 *data/hospital.RData

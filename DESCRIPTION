@@ -1,6 +1,6 @@
 Package: Rgbp
-Version: 1.1.3
-Date: 2018-05-16
+Version: 1.1.4
+Date: 2019-12-16
 Title: Hierarchical Modeling and Frequency Method Checking on
         Overdispersed Gaussian, Poisson, and Binomial Data
 Author: Joseph Kelly, Hyungsuk Tak, and Carl Morris
@@ -11,6 +11,6 @@ Description: We utilize  approximate Bayesian machinery to fit two-level conjuga
 License: GPL-2
 BugReports: https://github.com/jyklly/Rgbp/issues
 NeedsCompilation: no
-Packaged: 2018-05-17 15:24:18 UTC; hyungsuktak
+Packaged: 2019-12-16 23:55:32 UTC; joey
 Repository: CRAN
-Date/Publication: 2018-05-17 22:34:00 UTC
+Date/Publication: 2019-12-17 06:10:03 UTC

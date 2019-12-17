@@ -107,7 +107,7 @@ gr.ll.muunknown<-function(A,y,V,X,type){
   DVAi <- diag(1/(V+A))
   exp1 <- t(X)%*%DVAi%*%X
   BetaA <- try(chol2inv(chol(exp1)) %*% t(X) %*% DVAi %*% y, silent=TRUE)
-  if (class(BetaA) == "try-error") lla <- -10^6
+  if(inherits(BetaA, "try-error")) lla <- -10^6
   else lla <- type * log(A) + sum(dnorm(x=y, mean=X %*% BetaA, sd=sqrt(V+A), log=TRUE)) - 1/2*log(det(exp1))
   return(lla)
 }
